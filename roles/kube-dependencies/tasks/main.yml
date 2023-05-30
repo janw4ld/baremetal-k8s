@@ -3,12 +3,13 @@
     name: containerd
     update_cache: true
 
-- name: install/upgrade APT Transport HTTPS & curl
+- name: install base dependencies
   apt:
     pkg:
       - apt-transport-https
       - ca-certificates
       - curl
+      - acl
 
 - name: add Kubernetes apt-key
   apt_key:

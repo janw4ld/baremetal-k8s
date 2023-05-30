@@ -1,5 +1,7 @@
 - hosts: kube-masters
   become: true
+  vars:
+    allow_world_readable_tmpfiles: true
   roles:
     - hosts
     - kube-dependencies

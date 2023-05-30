@@ -29,21 +29,16 @@
 - name: install calico network
   become: true
   become_user: kube
-  shell: |
-    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml >> calico_setup.log
-    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/custom-resources.yaml >> calico_setup.log
-  args:
-    chdir: /home/kube
-    creates: calico_setup.log
+  shell: |  # using `create` is recommended by tigera if `apply` times out
+    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml
+    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/custom-resources.yaml
 
 - name: validate calico install
   become: true
   become_user: kube
-  shell: kubectl get pods -n calico-system
+  shell: "[ $(kubectl get pods -n tigera-operator | wc -l) = '0' ] && false"
 
-- name: remove control plane taints
+- name: remove control plane taints # TODO check if taint exists first
   become: true
   become_user: kube
-  shell: |
-    kubectl taint nodes --all node-role.kubernetes.io/control-plane-
-    kubectl taint nodes --all node-role.kubernetes.io/master-
+  shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
