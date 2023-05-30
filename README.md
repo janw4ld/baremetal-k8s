@@ -164,4 +164,29 @@ you might want to change the following:
 
 1. edit [`hosts`](./hosts) to match the IPs you picked for your cluster,  
     or add or remove worker nodes according to the WORKER_COUNT you picked
-1. 
+1. validate ansible's ssh connection
+
+    ```console
+    $ sudo ansible -i hosts all -m ping
+    master.kube.local | SUCCESS => {
+        "ansible_facts": {
+            "discovered_interpreter_python": "/usr/bin/python3"
+        },
+        "changed": false,
+        "ping": "pong"
+    }
+    worker2.kube.local | SUCCESS => {
+        "ansible_facts": {
+            "discovered_interpreter_python": "/usr/bin/python3"
+        },
+        "changed": false,
+        "ping": "pong"
+    }
+    worker1.kube.local | SUCCESS => {
+        "ansible_facts": {
+            "discovered_interpreter_python": "/usr/bin/python3"
+        },
+        "changed": false,
+        "ping": "pong"
+    }
+    ```

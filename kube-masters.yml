@@ -1,0 +1,7 @@
+- hosts: kube-masters
+  become: true
+  roles:
+    - hosts
+    - kube-dependencies
+    - kube-master-dependencies
+    - kube-master-init

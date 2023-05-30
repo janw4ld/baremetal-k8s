@@ -1,0 +1,83 @@
+- name: install containerd
+  apt:
+    name: containerd
+
+- name: install/upgrade APT Transport HTTPS & curl
+  apt:
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+
+- name: add Kubernetes apt-key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+- name: add Kubernetes' APT repository
+  apt_repository:
+    repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+    filename: "kubernetes"
+
+- name: install kubelet
+  apt:
+    name: kubelet=1.27.2-00
+    update_cache: true
+
+- name: install kubeadm
+  apt:
+    name: kubeadm=1.27.2-00
+
+- name: configure modules for Containerd
+  blockinfile:
+    path: /etc/modules-load.d/containerd.conf
+    create: true
+    block: |
+      overlay
+      br_netfilter
+
+- name: create Containerd directory
+  file:
+    path: /etc/containerd
+    state: directory
+
+- name: add Containerd configuration
+  shell: /usr/bin/containerd config default > /etc/containerd/config.toml
+
+- name: configuring the systemd cgroup driver for Containerd
+  replace:
+    path: /etc/containerd/config.toml
+    regexp: '(\s*SystemdCgroup\s*=\s*)false'
+    replace: '\1true'
+
+- name: load br_netfilter kernel module
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: set bridge-nf-call-iptables
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+
+- name: set ip_forward
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+
+# https://kubernetes.io/docs/setup/production-environment/container-runtimes/#systemd-cgroup-driver
+# Note: Starting with v1.22 and later, when creating a cluster with kubeadm, if
+# the user does not set the cgroupDriver field under KubeletConfiguration,
+# kubeadm defaults it to systemd.
+
+- name: enable the Containerd service and start it
+  systemd:
+    name: containerd
+    state: restarted
+    daemon-reload: true
+    enabled: true
+
+- name: enable the Kubelet service, and enable it persistently
+  service:
+    name: kubelet
+    state: started
+    enabled: true

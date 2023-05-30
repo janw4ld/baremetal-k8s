@@ -1,0 +1,32 @@
+- hosts: all
+  become: yes
+
+  tasks:
+    - name: Disable auto upgrades
+      copy:
+        src: /usr/share/unattended-upgrades/20auto-upgrades-disabled
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        remote_src: yes
+
+    # https://germaniumhq.com/2019/02/14/2019-02-14-Disabling-Swap-for-Kubernetes-in-an-Ansible-Playbook/
+    - name: Disable SWAP since kubernetes can't work with swap enabled (1/2)
+      shell: |
+        swapoff -a
+
+    - name: Disable SWAP in fstab since kubernetes can't work with swap enabled (2/2)
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+    - name: Create kube superuser
+      user:
+        name: kube
+        password: "{{ lookup('ansible.builtin.password', './.vagrant/kube-password', seed=inventory_hostname) | password_hash('sha512') }}"
+        shell: /bin/bash
+        groups: sudo
+
+    - name: Allow kube to use sudo without a password
+      copy:
+        content: "kube ALL=(ALL) NOPASSWD:ALL"
+        dest: /etc/sudoers.d/kube

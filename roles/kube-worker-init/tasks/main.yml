@@ -1,0 +1,15 @@
+- name: join cluster
+  become: true
+  become_user: kube
+  command: "{{ join_command }}"
+  args:
+    creates: /home/kube/node_joined.log
+  register: kubeadm_join_raw
+
+- name: save kubeadm join output to a file
+  become: true
+  become_user: kube
+  copy:
+    content: "stdout:\n{{ kubeadm_join_raw.stdout }}\n\nstderr:\n{{ kubeadm_join_raw.stderr }}"
+    dest: /home/kube/node_joined.log
+  when: kubeadm_join_raw.changed
