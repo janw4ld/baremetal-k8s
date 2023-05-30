@@ -1,18 +1,19 @@
 - hosts: kube-masters[0]
-  gather_facts: no
+  become: true
+  gather_facts: false
 
   tasks:
     - name: get join command
       command: kubeadm token create --print-join-command
       register: join_command_raw
-      changed_when: no
+      changed_when: false
 
     - name: set join command
       set_fact:
         join_command: "{{ join_command_raw.stdout_lines[0] }}"
 
 - hosts: kube-workers
-  become: yes
+  become: true
 
   vars:
     join_command: "{{ hostvars['master.kube.local'].join_command }}"
