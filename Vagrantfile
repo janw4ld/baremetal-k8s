@@ -43,6 +43,7 @@ Vagrant.configure("2") do |config|
         ssh_prv_key = File.read("/root/.ssh/k8s_ed25519")
         ssh_pub_key = File.readlines("/root/.ssh/k8s_ed25519.pub").first.strip
        
+        # https://stackoverflow.com/questions/30075461/how-do-i-add-my-own-public-key-to-vagrant-vm
         s.inline = <<-SHELL
           if ! grep -sq "#{ssh_pub_key}" /home/vagrant/.ssh/authorized_keys; then
             echo "SSH key provisioning."
