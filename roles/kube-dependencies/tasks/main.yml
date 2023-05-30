@@ -1,6 +1,7 @@
 - name: install containerd
   apt:
     name: containerd
+    update_cache: true
 
 - name: install/upgrade APT Transport HTTPS & curl
   apt:
