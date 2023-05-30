@@ -1,17 +1,18 @@
 # Creating a kubernetes cluster on multiple KVM virtual machines
 
-<sup>FEDORA NOTICE YMMV</sup>
+<sup>FEDORA NOTICE&YMMV, libvirt network needs root -> always sudo vagrant</sup>
 
 ## Prerequisites
 
-* [libvirt](https://libvirt.org/)
-* [qemu-kvm](https://www.qemu.org/)
-* [Vagrant](https://www.vagrantup.com/)
-* [Ansible](https://www.ansible.com/)
+- Linux host with about 12GB of RAM
+- [libvirt](https://libvirt.org/)
+- [qemu-kvm](https://www.qemu.org/)
+- [Vagrant](https://www.vagrantup.com/)
+- [Ansible](https://www.ansible.com/)
 
-## KVM
+## Creating a cluster of nodes
 
-### Network bridge
+### Setup a network bridge for KVM
 
 1. Show active interfaces, take note of the one you want to bridge
 
@@ -51,7 +52,6 @@
 
     ```console
     $ sudo virsh net-list --all
-    [sudo] password for user:
     Name          State    Autostart   Persistent
     ------------------------------------------------
     default       active   yes         yes
@@ -61,7 +61,7 @@
 1. Create a new network for the bridge:
 
     ```console
-    $ cat > bridge.xml <<EOF
+    $ cat <<EOF >bridge.xml
     <network>
         <name>host-bridge</name>
         <forward mode="bridge"/>
@@ -69,17 +69,17 @@
     </network>
     EOF
 
-    $ virsh net-define bridge.xml   # delete this file after
+    $ sudo virsh net-define bridge.xml   # okay to delete after
     Network host-bridge defined from bridge.xml
     ```
 
 1. Start the network:
 
     ```console
-    $ virsh net-start host-bridge
+    $ sudo virsh net-start host-bridge
     Network host-bridge started
 
-    $ virsh net-autostart host-bridge
+    $ sudo virsh net-autostart host-bridge
     Network host-bridge marked as autostarted
     ```
 
@@ -87,9 +87,69 @@
 
     ```console
     $ sudo virsh net-list --all
-    [sudo] password for user:
     Name          State    Autostart   Persistent
     ------------------------------------------------
     default       active   yes         yes
     host-bridge   active   yes         yes
+    ```
+
+### Create VMs
+
+1. Read, validate and edit the [`Vagrantfile`](./Vagrantfile) to your needs
+
+you might want to change the following:
+
+- WORKER_COUNT: the number of worker nodes to create (total node count)
+= 1 master + WORKER_COUNT
+- cpu count & memory size
+
+    ```ruby
+    libvirt.cpus = 2
+    libvirt.memory = 4096
+    ```
+
+    2GB RAM works but complex deployments will run out of memory
+
+1. Create the VMs
+
+    ```console
+    $ sudo vagrant up
+    ...
+    ==> worker-1: Machine booted and ready!
+    ==> master: Machine booted and ready!
+    ==> worker-1: Setting hostname...
+    ==> master: Setting hostname...
+    ==> worker-2: Machine booted and ready!
+    ==> worker-2: Setting hostname...
+    ==> master: Configuring and enabling network interfaces...
+    ==> worker-1: Configuring and enabling network interfaces...
+    ==> worker-2: Configuring and enabling network interfaces...
+    ```
+
+1. Verify VMs are running
+
+    ```console
+    $ sudo virsh list --all
+     Id   Name                     State
+    -----------------------------------------
+     1    baremetal-k8s_master     running
+     2    baremetal-k8s_worker-1   running
+     3    baremetal-k8s_worker-2   running
+     ...
+    ```
+
+1. Verify `master` is live on `br0`
+
+    ```console
+    $ ping 192.168.1.170
+    PING 192.168.1.170 (192.168.1.170) 56(84) bytes of data.
+    64 bytes from 192.168.1.170: icmp_seq=1 ttl=64 time=0.285 ms
+    64 bytes from 192.168.1.170: icmp_seq=2 ttl=64 time=0.241 ms
+    64 bytes from 192.168.1.170: icmp_seq=3 ttl=64 time=0.243 ms
+    64 bytes from 192.168.1.170: icmp_seq=4 ttl=64 time=0.568 ms
+    64 bytes from 192.168.1.170: icmp_seq=5 ttl=64 time=0.174 ms
+    ^C
+    --- 192.168.1.170 ping statistics ---
+    5 packets transmitted, 5 received, 0% packet loss, time 4093ms
+    rtt min/avg/max/mdev = 0.174/0.302/0.568/0.137 ms
     ```
