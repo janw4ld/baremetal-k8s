@@ -1,6 +1,6 @@
 # Creating a kubernetes cluster on multiple KVM virtual machines
 
-<sup>FEDORA NOTICE&YMMV, libvirt network needs root -> always sudo vagrant</sup>
+<sup>FEDORA NOTICE&YMMV, libvirt network needs root -> always sudo vagrant, TODO god no please no root</sup>
 
 ## Prerequisites
 
@@ -95,6 +95,12 @@
 
 ### Create VMs
 
+1. Create ssh keys to use with the cluster
+
+    ```bash
+    sudo ssh-keygen -t ed25519 -f /root/.ssh/k8s_ed25519 -C "baremetal-k8s"
+    ```
+
 1. Read, validate and edit the [`Vagrantfile`](./Vagrantfile) to your needs
 
 you might want to change the following:
@@ -153,3 +159,9 @@ you might want to change the following:
     5 packets transmitted, 5 received, 0% packet loss, time 4093ms
     rtt min/avg/max/mdev = 0.174/0.302/0.568/0.137 ms
     ```
+
+## Installing Kubernetes
+
+1. edit [`hosts`](./hosts) to match the IPs you picked for your cluster,  
+    or add or remove worker nodes according to the WORKER_COUNT you picked
+1. 

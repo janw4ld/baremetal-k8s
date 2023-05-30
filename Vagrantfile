@@ -9,6 +9,8 @@ IMAGE_NAME = "roboxes/ubuntu2204"   # 1.5GB, not based on cloud image
 WORKER_COUNT = 2    # total nodes = 1 master + WORKER_COUNT
 
 Vagrant.configure("2") do |config|
+    config.ssh.insert_key = false
+    
     config.vm.provider :libvirt do |libvirt|
         libvirt.cpus = 2
         libvirt.memory = 4096
@@ -36,4 +38,24 @@ Vagrant.configure("2") do |config|
             worker.vm.hostname = "worker-#{i}"
         end
     end
+
+    config.vm.provision "shell" do |s|
+        ssh_prv_key = File.read("/root/.ssh/k8s_ed25519")
+        ssh_pub_key = File.readlines("/root/.ssh/k8s_ed25519.pub").first.strip
+       
+        s.inline = <<-SHELL
+          if ! grep -sq "#{ssh_pub_key}" /home/vagrant/.ssh/authorized_keys; then
+            echo "SSH key provisioning."
+            mkdir -p /home/vagrant/.ssh/
+            touch /home/vagrant/.ssh/authorized_keys
+            echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys
+            echo #{ssh_pub_key} > /home/vagrant/.ssh/id_rsa.pub
+            chmod 644 /home/vagrant/.ssh/id_rsa.pub
+            echo "#{ssh_prv_key}" > /home/vagrant/.ssh/id_rsa
+            chmod 600 /home/vagrant/.ssh/id_rsa
+            chown -R vagrant:vagrant /home/vagrant
+            exit 0
+          fi
+        SHELL
+      end
 end
