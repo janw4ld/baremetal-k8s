@@ -82,17 +82,7 @@ document assumes you're in the root of the repo on the host server.
     rkManager/ActiveConnection/11)
     ```
 
-1. Verify libvirt networks:
-
-    ```console
-    $ sudo virsh net-list --all
-    Name          State    Autostart   Persistent
-    ------------------------------------------------
-    default       active   yes         yes
-    host-bridge   active   yes         yes
-    ```
-
-1. Create a new network for the bridge:
+1. Create a new libvirt network for the bridge:
 
     ```console
     $ cat <<EOF >bridge.xml
