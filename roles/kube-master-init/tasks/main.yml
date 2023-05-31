@@ -29,14 +29,8 @@
 - name: install calico network
   become: true
   become_user: kube
-  shell: |  # using `create` is recommended by tigera if `apply` times out
-    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/tigera-operator.yaml
-    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/custom-resources.yaml
-
-- name: validate calico install
-  become: true
-  become_user: kube
-  shell: "[ $(kubectl get pods -n tigera-operator | wc -l) = '0' ] && false"
+  shell: |
+    kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
 
 - name: remove control plane taints # TODO check if taint exists first
   become: true

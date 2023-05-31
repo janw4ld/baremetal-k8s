@@ -164,10 +164,25 @@ you might want to change the following:
 
 1. edit [`hosts`](./hosts) to match the IPs you picked for your cluster,  
     or add or remove worker nodes according to the WORKER_COUNT you picked
+
 1. validate ansible's ssh connection
+
+    on the very first ping you'll be asked to accept the ssh keys of each of the
+    new hosts, quickly answer `yes` to all of them, or run the command multiple
+    times if you don't get it right the first time
 
     ```console
     $ sudo ansible -i hosts all -m ping
+    The authenticity of host '192.168.1.170 (192.168.1.170)' can't be established.
+    ED25519 key fingerprint is SHA256:DYESLuxnzrzQ3gO9wxJ58ijEsL1Jc8YHY7+2V6OAlZw.
+    This key is not known by any other names
+    The authenticity of host '192.168.1.171 (192.168.1.171)' can't be established.
+    ED25519 key fingerprint is SHA256:8tJcnFUghVsJn3LHDvY5ElDj5in5FFIAzPhQziyjYmM.
+    This key is not known by any other names
+    The authenticity of host '192.168.1.172 (192.168.1.172)' can't be established.
+    ED25519 key fingerprint is SHA256:AK0pVdicmdwCJkcMnFdiGZhhXQedGiw4zVfHlHTrgJ4.
+    This key is not known by any other names
+    Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
     master.kube.local | SUCCESS => {
         "ansible_facts": {
             "discovered_interpreter_python": "/usr/bin/python3"
@@ -175,14 +190,16 @@ you might want to change the following:
         "changed": false,
         "ping": "pong"
     }
-    worker2.kube.local | SUCCESS => {
-        "ansible_facts": {
+    yes
+    yesworker-1.kube.local | SUCCESS => {
+        "ansible_facts": {                                                                                                                                                                       y-23
             "discovered_interpreter_python": "/usr/bin/python3"
         },
         "changed": false,
         "ping": "pong"
     }
-    worker1.kube.local | SUCCESS => {
+
+    worker-2.kube.local | SUCCESS => {
         "ansible_facts": {
             "discovered_interpreter_python": "/usr/bin/python3"
         },

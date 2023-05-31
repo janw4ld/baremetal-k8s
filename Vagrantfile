@@ -50,13 +50,9 @@ Vagrant.configure("2") do |config|
             mkdir -p /home/vagrant/.ssh/
             touch /home/vagrant/.ssh/authorized_keys
             echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys
-            echo #{ssh_pub_key} > /home/vagrant/.ssh/id_rsa.pub
-            chmod 644 /home/vagrant/.ssh/id_rsa.pub
-            echo "#{ssh_prv_key}" > /home/vagrant/.ssh/id_rsa
-            chmod 600 /home/vagrant/.ssh/id_rsa
-            chown -R vagrant:vagrant /home/vagrant
-            exit 0
+            chown -R vagrant:vagrant /home/vagrant/.ssh/
           fi
         SHELL
-      end
+    end
+
 end
