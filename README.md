@@ -1,5 +1,17 @@
 # Provisioning a cluster of k8s nodes to an on-premise KVM hypervisor and deploying wordpress to it
 
+- [Provisioning a cluster of k8s nodes to an on-premise KVM hypervisor and deploying wordpress to it](#provisioning-a-cluster-of-k8s-nodes-to-an-on-premise-kvm-hypervisor-and-deploying-wordpress-to-it)
+    - [Prerequisites](#prerequisites)
+    - [Creating the cluster](#creating-the-cluster)
+        - [Setup a network bridge for KVM](#setup-a-network-bridge-for-kvm)
+        - [Generate an SSH key to use with the cluster](#generate-an-ssh-key-to-use-with-the-cluster)
+        - [Create VMs](#create-vms)
+    - [Installing Kubernetes](#installing-kubernetes)
+    - [Configuring MetalLB Load Balancer](#configuring-metallb-load-balancer)
+    - [Battle testing the cluster](#battle-testing-the-cluster)
+        - [Deploying wordpress+mysql app](#deploying-wordpressmysql-app)
+- [References](#references)
+
 ## Prerequisites
 
 A linux host with :
@@ -268,6 +280,8 @@ with `sudo vagrant destroy`.
     etcd-0               Healthy   {"health":"true","reason":""}  
     ```
 
+## Configuring MetalLB Load Balancer
+
 1. identify another block of unused IP addresses on the host network to allocate
 to the load balancer, and edit
 [`k8s/metallb/metallb.yml:.spec.addresses`](./k8s/metallb/metallb.yml) to use
@@ -322,12 +336,13 @@ it.
    wp-server   LoadBalancer   10.103.95.149   192.168.1.240   80:31379/TCP   20s
    ```
 
+    note that port `192.168.1.240:80` can be forwarded in the router to expose
+    the service to the internet.
+
 1. visit the service at `http://<external-ip>:80` on your browser
     ![wordpress server running](README.d/wp-server.png)
 
-# idk what to title this section
-
-## references
+# References
 
 - [Configuring a Network Bridge - Red Hat Enterprise Linux](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/configuring-a-network-bridge_configuring-and-managing-networking)
 - [Install Kubeadm - Kubernetes Documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
