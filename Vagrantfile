@@ -22,45 +22,31 @@ Vagrant.configure("2") do |config|
         libvirt.driver = "kvm"
     end
 
-    config.vm.define "master" do |master|
-        master.vm.box = IMAGE_NAME
-	    master.vm.network :public_network,
-            :dev => "br0",  # check github.com/janw4ld/baremetal-k8s#network-bridge
+    node_names = ["master"] + (1..WORKER_COUNT).map { |i| "worker-#{i}" }
+
+    node_names.each_with_index do |node_name,index|
+        config.vm.define node_name do |node|
+            node.vm.box = IMAGE_NAME
+            node.vm.network :public_network,
+            :dev => "br0",
             :mode => "bridge",
             :type => "bridge",
-	        :ip => "#{NETWORK_PREFIX}0"
-        master.vm.hostname = "master"
+            :ip => "#{NETWORK_PREFIX}#{index}"
+            node.vm.hostname = node_name
+        end
     end
 
-    system(
+    File.write('./hosts',
     <<~TEXT
-        echo '[kube-masters]
+        [kube-masters]
         master.kube.local ansible_host=#{NETWORK_PREFIX}0
         
-        [kube-workers]' >./hosts
-    TEXT
-    )
+        [kube-workers]
+        #{node_names.drop(1).map.with_index { |node_name, index| index += 1
+            "worker-#{index}.kube.local ansible_host=#{NETWORK_PREFIX}#{index}"
+        }.join("\n")}
 
-    (1..WORKER_COUNT).each do |i|
-        config.vm.define "worker-#{i}" do |worker|
-            worker.vm.box = IMAGE_NAME
-            worker.vm.network :public_network,
-                :dev => "br0",
-                :mode => "bridge",
-                :type => "bridge",
-                :ip => "#{NETWORK_PREFIX}#{i}"
-            worker.vm.hostname = "worker-#{i}"
-        end
-
-        system(
-            "echo 'worker-#{i}.kube.local ansible_host=#{NETWORK_PREFIX}#{i}' \
-            >>./hosts"
-        )
-    end
-
-    system(
-    <<~TEXT
-        echo '[kube-masters:vars]
+        [kube-masters:vars]
         ansible_ssh_port=22
         ansible_ssh_user=vagrant
         ansible_ssh_private_key_file=#{ssh_key_path}
@@ -72,7 +58,7 @@ Vagrant.configure("2") do |config|
 
         [ubuntu:children]
         kube-masters
-        kube-workers' >>./hosts
+        kube-workers
     TEXT
     )
 
