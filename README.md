@@ -5,13 +5,27 @@ TODO god no please no root</sup>
 
 ## Prerequisites
 
-- Linux host with about 12GB of RAM
+A linux host with :
+
+- system requirements
+    - recommended:
+        - 12GB RAM
+        - 6 CPU cores
+        - 50GB disk space
+    - minimum:
+        - 6GB RAM
+        - 4 CPU cores
+        - 30GB disk space
 - [libvirt](https://libvirt.org/)
 - [qemu-kvm](https://www.qemu.org/)
+- [nmcli](https://manpages.ubuntu.com/manpages/lunar/man1/nmcli.1.html)
 - [Vagrant](https://www.vagrantup.com/)
 - [Ansible](https://www.ansible.com/)
 
 ## Creating the cluster
+
+First connect to the host machine and clone this repo on it, the rest of the
+document assumes you're in the root of the repo on the host server.
 
 ### Setup a network bridge for KVM
 
@@ -108,14 +122,16 @@ you might want to change the following:
 
 - WORKER_COUNT: the number of worker nodes to create (total node count)
 = 1 master + WORKER_COUNT
-- cpu count & memory size
+- cpu count & memory size per node
 
     ```ruby
     libvirt.cpus = 2
     libvirt.memory = 4096
     ```
 
-    2GB RAM works but complex deployments will run out of memory
+    The default config provisions 3 nodes, requiring a total of 6 CPU cores and
+    12GB of RAM. Setting the RAM to 2GB per node works but complex deployments
+    on k8s will run out of memory.
 
 1. Create the VMs
 
@@ -169,6 +185,10 @@ you might want to change the following:
     5 packets transmitted, 5 received, 0% packet loss, time 4093ms
     rtt min/avg/max/mdev = 0.174/0.302/0.568/0.137 ms
     ```
+
+The VMs are now ready to be provisioned with kubernetes. They can be brought up
+and down at any time with `sudo vagrant up` and `sudo vagrant halt`, and deleted
+with `sudo vagrant destroy`.
 
 ## Installing Kubernetes
 
