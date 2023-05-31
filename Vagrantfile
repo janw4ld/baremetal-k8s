@@ -55,4 +55,7 @@ Vagrant.configure("2") do |config|
         SHELL
     end
 
+    (0..WORKER_COUNT).each do |i|   # add vms to known_hosts to avoid prompt
+        system("ssh-keyscan -H #{NETWORK_PREFIX}#{i} 2>/dev/null | tee -a /root/.ssh/known_hosts >/dev/null")
+    end
 end
