@@ -116,22 +116,26 @@ sudo ssh-keygen -t ed25519 -f /root/.ssh/k8s_ed25519 -C "baremetal-k8s"
 
 ### Create VMs
 
+1. identify a block of unused IP addresses on the host network to allocate to
+the cluster and edit `NETWORK_PREFIX` in the [`Vagrantfile`](./Vagrantfile) to
+use it.
+
 1. Read, validate and edit the [`Vagrantfile`](./Vagrantfile) to your needs
 
-you might want to change the following:
+    you might want to change the following:
 
-- WORKER_COUNT: the number of worker nodes to create (total node count)
-= 1 master + WORKER_COUNT
-- cpu count & memory size per node
+    - WORKER_COUNT: the number of worker nodes to create (total node count)
+    = 1 master + WORKER_COUNT
+    - cpu count & memory size per node
 
-    ```ruby
-    libvirt.cpus = 2
-    libvirt.memory = 4096
-    ```
+        ```ruby
+        libvirt.cpus = 2
+        libvirt.memory = 4096
+        ```
 
-    The default config provisions 3 nodes, requiring a total of 6 CPU cores and
-    12GB of RAM. Setting the RAM to 2GB per node works but complex deployments
-    on k8s will run out of memory.
+        The default config provisions 3 nodes, requiring a total of 6 CPU cores
+        and 12GB of RAM. Setting the RAM to 2GB per node works but complex
+        deployments on k8s will run out of memory.
 
 1. Make sure you're in the root of the repo and run the Vagrantfile
 
@@ -256,5 +260,10 @@ with `sudo vagrant destroy`.
     controller-manager   Healthy   ok                              
     etcd-0               Healthy   {"health":"true","reason":""}  
     ```
+
+1. identify another block of unused IP addresses on the host network to allocate
+to the load balancer, and edit
+[`k8s/metallb/metallb.yml:.spec.addresses`](./k8s/metallb/metallb.yml) to use
+it.
 
 ## Battle testing the cluster

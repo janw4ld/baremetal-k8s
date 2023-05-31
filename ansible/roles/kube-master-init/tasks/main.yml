@@ -31,3 +31,12 @@
   become_user: kube
   shell: |
     kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+
+- name: install metallb
+  become: true
+  become_user: kube
+  shell: |
+    kubectl get configmap kube-proxy -n kube-system -o yaml \
+    | sed -e "s/strictARP: false/strictARP: true/" \
+    | kubectl apply -f - -n kube-system
+    kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.9/config/manifests/metallb-native.yaml
