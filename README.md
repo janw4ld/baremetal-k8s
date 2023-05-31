@@ -1,7 +1,4 @@
-# Creating a kubernetes cluster on multiple KVM virtual machines
-
-<sup>FEDORA NOTICE&YMMV, libvirt network needs root -> always sudo vagrant,
-TODO god no please no root</sup>
+# Provisioning a cluster of k8s nodes to an on-premise KVM hypervisor and deploying wordpress to it
 
 ## Prerequisites
 
@@ -19,8 +16,18 @@ A linux host with :
 - [libvirt](https://libvirt.org/)
 - [qemu-kvm](https://www.qemu.org/)
 - [nmcli](https://manpages.ubuntu.com/manpages/lunar/man1/nmcli.1.html)
-- [Vagrant](https://www.vagrantup.com/)
+- [Hashicorp Vagrant](https://www.vagrantup.com/)
 - [Ansible](https://www.ansible.com/)
+
+This setup was created and tested on Fedora 37, but should work on any linux
+distro. The libvirt bridge network requires root privileges to create and use,
+which forces us to use vagrant as root, which in turn forces running ansible as
+root. This is not ideal, but it's the only way compatible with Fedora's libvirt
+defaults, other distros may allow non-privileged users to use all libvirt
+features in a local (per-user) scope so your mileage may vary, but modifying the
+repo to work with another user is easy, the only thing to change is
+`HOST_HOME_PATH = "/root"` in the Vagrantfile and `/root` to `$HOME` in the
+README.md instructions.
 
 ## Creating the cluster
 
@@ -116,7 +123,7 @@ sudo ssh-keygen -t ed25519 -f /root/.ssh/k8s_ed25519 -C "baremetal-k8s"
 
 ### Create VMs
 
-1. identify a block of unused IP addresses on the host network to allocate to
+1. Identify a block of unused IP addresses on the host network to allocate to
 the cluster and edit `NETWORK_PREFIX` in the [`Vagrantfile`](./Vagrantfile) to
 use it.
 
@@ -266,6 +273,10 @@ to the load balancer, and edit
 [`k8s/metallb/metallb.yml:.spec.addresses`](./k8s/metallb/metallb.yml) to use
 it.
 
+    NOTE: this IP pool definition uses Layer 2 mode instead of BGP, which isn't
+    the most performant production configuration, but it's the one suitable for
+    homelab environments where the router isn't under your control.
+
 ## Battle testing the cluster
 
 ### Deploying wordpress+mysql app
@@ -313,3 +324,18 @@ it.
 
 1. visit the service at `http://<external-ip>:80` on your browser
     ![wordpress server running](README.d/wp-server.png)
+
+# idk what to title this section
+
+## references
+
+- [Configuring a Network Bridge - Red Hat Enterprise Linux](https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/configuring-a-network-bridge_configuring-and-managing-networking)
+- [Install Kubeadm - Kubernetes Documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
+- [Create a Kubernetes Cluster with Kubeadm - Kubernetes Documentation](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)
+- [Container Runtimes - Kubernetes Documentation](https://kubernetes.io/docs/setup/production-environment/container-runtimes)
+- [Configure Cgroup Driver - Kubernetes Documentation](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/configure-cgroup-driver/)
+- [Calico Quickstart - Tigera Documentation](https://docs.tigera.io/calico/latest/getting-started/kubernetes/quickstart)
+- [Weave Net - Kubernetes Add-on - Weave Documentation](https://www.weave.works/docs/net/latest/kubernetes/kube-addon/)
+- [Metallb Advanced Layer 2 Configuration - Metallb Documentation](https://metallb.universe.tf/configuration/_advanced_l2_configuration/)
+- [Metallb Usage - Metallb Documentation](https://metallb.universe.tf/usage/)
+- [my solutions for the KodeKloud K8s labs](https://github.com/janw4ld/k8s-labs)
