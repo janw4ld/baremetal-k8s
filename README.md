@@ -1,6 +1,7 @@
 # Creating a kubernetes cluster on multiple KVM virtual machines
 
-<sup>FEDORA NOTICE&YMMV, libvirt network needs root -> always sudo vagrant, TODO god no please no root</sup>
+<sup>FEDORA NOTICE&YMMV, libvirt network needs root -> always sudo vagrant,
+TODO god no please no root</sup>
 
 ## Prerequisites
 
@@ -169,7 +170,7 @@ you might want to change the following:
     rtt min/avg/max/mdev = 0.174/0.302/0.568/0.137 ms
     ```
 
-## Install Kubernetes
+## Installing Kubernetes
 
 1. validate ansible's ssh connection
 
@@ -205,23 +206,15 @@ you might want to change the following:
     ...
     ```
 
-1. fetch kubeconfig from master node
+1. connect local kubectl to the cluster
+
+    NOTE: this will move your local `~/.kube/config` to `~/.kube/config.bak`
 
    ```console
    $ sudo vagrant ssh master -c 'sudo cat /home/kube/.kube/config' > ./config
+   $ cp ~/.kube/config ~/.kube/config.bak
+   $ cp ./config ~/.kube/config
    ```
-
-1. backup current kubeconfig
-
-    ```console
-    $ cp ~/.kube/config ~/.kube/config.bak
-    ```
-
-1. install the new kubeconfig
-
-    ```console
-    $ cp ./config ~/.kube/config
-    ```
 
 1. verify cluster is up
 

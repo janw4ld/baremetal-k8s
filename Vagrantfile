@@ -28,7 +28,7 @@ Vagrant.configure("2") do |config|
         config.vm.define node_name do |node|
             node.vm.box = IMAGE_NAME
             node.vm.network :public_network,
-            :dev => "br0",
+            :dev => "br0",  # check github.com/janw4ld/baremetal-k8s#network-bridge
             :mode => "bridge",
             :type => "bridge",
             :ip => "#{NETWORK_PREFIX}#{index}"
