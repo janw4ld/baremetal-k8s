@@ -267,3 +267,49 @@ to the load balancer, and edit
 it.
 
 ## Battle testing the cluster
+
+### Deploying wordpress+mysql app
+
+1. create mysql secrets
+
+   ```console
+   $ cat<<EOF >k8s/wordpress/db-secret.yml
+    apiVersion: v1
+    kind: Secret
+    metadata:
+    name: db-secret
+    data:
+    #  MYSQL_USER: $(echo -n root | base64)
+    #  MYSQL_PASSWORD: $(echo -n password | base64)
+    MYSQL_ROOT_PASSWORD: $(echo -n strongandcomplicatedpassword | base64)
+    EOF
+    ```
+
+1. deploy application
+
+   ```console
+   $ kubectl apply -f k8s/wordpress && sleep 5 && kubectl get po 
+   secret/db-secret unchanged
+   persistentvolume/mysql-pv created
+   persistentvolumeclaim/mysql-pv-claim created
+   deployment.apps/wp-mysql created
+   service/wp-mysql created
+   persistentvolume/wp-pv created
+   persistentvolumeclaim/wp-pv-claim created
+   deployment.apps/wp-server created
+   service/wp-server created
+   NAME                         READY   STATUS    RESTARTS   AGE
+   wp-mysql-744c886989-jcwvf    1/1     Running   0          5s
+   wp-server-7c89f74666-wzskz   1/1     Running   0          5s
+   ```
+
+1. get service ip address
+
+   ```console
+   $ kubectl get svc wp-server 
+   NAME        TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
+   wp-server   LoadBalancer   10.103.95.149   192.168.1.240   80:31379/TCP   20s
+   ```
+
+1. visit the service at `http://<external-ip>:80` on your browser
+    ![wordpress server running](README.d/wp-server.png)
