@@ -171,9 +171,6 @@ you might want to change the following:
 
 ## Install Kubernetes
 
-1. edit [`hosts`](./hosts) to match the IPs you picked for your cluster,  
-    or add or remove worker nodes according to the WORKER_COUNT you picked
-
 1. validate ansible's ssh connection
 
     ```console

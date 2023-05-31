@@ -8,9 +8,14 @@ IMAGE_NAME = "roboxes/ubuntu2204"   # 1.5GB, not based on cloud image
 
 WORKER_COUNT = 2    # total nodes = 1 master + WORKER_COUNT
 
+HOST_HOME_PATH = "/root"
+
 Vagrant.configure("2") do |config|
     config.ssh.insert_key = false
-    
+    ssh_key_path = "#{HOST_HOME_PATH}/.ssh/k8s_ed25519"
+    ssh_prv_key = File.read(ssh_key_path)
+    ssh_pub_key = File.readlines("#{ssh_key_path}.pub").first.strip
+
     config.vm.provider :libvirt do |libvirt|
         libvirt.cpus = 2
         libvirt.memory = 4096
@@ -27,6 +32,15 @@ Vagrant.configure("2") do |config|
         master.vm.hostname = "master"
     end
 
+    system(
+    <<~TEXT
+        echo '[kube-masters]
+        master.kube.local ansible_host=#{NETWORK_PREFIX}0
+        
+        [kube-workers]' >./hosts
+    TEXT
+    )
+
     (1..WORKER_COUNT).each do |i|
         config.vm.define "worker-#{i}" do |worker|
             worker.vm.box = IMAGE_NAME
@@ -37,12 +51,32 @@ Vagrant.configure("2") do |config|
                 :ip => "#{NETWORK_PREFIX}#{i}"
             worker.vm.hostname = "worker-#{i}"
         end
+
+        system(
+            "echo 'worker-#{i}.kube.local ansible_host=#{NETWORK_PREFIX}#{i}' \
+            >>./hosts"
+        )
     end
 
-    config.vm.provision "shell" do |s|
-        ssh_prv_key = File.read("/root/.ssh/k8s_ed25519")
-        ssh_pub_key = File.readlines("/root/.ssh/k8s_ed25519.pub").first.strip
-       
+    system(
+    <<~TEXT
+        echo '[kube-masters:vars]
+        ansible_ssh_port=22
+        ansible_ssh_user=vagrant
+        ansible_ssh_private_key_file=#{ssh_key_path}
+
+        [kube-workers:vars]
+        ansible_ssh_port=22
+        ansible_ssh_user=vagrant
+        ansible_ssh_private_key_file=#{ssh_key_path}
+
+        [ubuntu:children]
+        kube-masters
+        kube-workers' >>./hosts
+    TEXT
+    )
+
+    config.vm.provision "shell" do |s|       
         # https://stackoverflow.com/questions/30075461/how-do-i-add-my-own-public-key-to-vagrant-vm
         s.inline = <<-SHELL
           if ! grep -sq "#{ssh_pub_key}" /home/vagrant/.ssh/authorized_keys; then
@@ -56,6 +90,9 @@ Vagrant.configure("2") do |config|
     end
 
     (0..WORKER_COUNT).each do |i|   # add vms to known_hosts to avoid prompt
-        system("ssh-keyscan -H #{NETWORK_PREFIX}#{i} 2>/dev/null | tee -a /root/.ssh/known_hosts >/dev/null")
+        system(
+            "ssh-keyscan -H #{NETWORK_PREFIX}#{i} 2>/dev/null \
+            | tee -a #{HOST_HOME_PATH}/.ssh/known_hosts >/dev/null"
+        )
     end
 end
