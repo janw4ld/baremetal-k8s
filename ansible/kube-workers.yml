@@ -19,6 +19,6 @@
     join_command: "{{ hostvars['master.kube.local'].join_command }}"
 
   roles:
-    - hosts
+    - update-etc-hosts
     - kube-dependencies
     - kube-worker-init

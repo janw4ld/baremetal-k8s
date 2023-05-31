@@ -10,7 +10,7 @@
 - [Vagrant](https://www.vagrantup.com/)
 - [Ansible](https://www.ansible.com/)
 
-## Creating a cluster of nodes
+## Creating the cluster
 
 ### Setup a network bridge for KVM
 
@@ -120,16 +120,25 @@ you might want to change the following:
 
     ```console
     $ sudo vagrant up
-    ...
-    ==> worker-1: Machine booted and ready!
-    ==> master: Machine booted and ready!
-    ==> worker-1: Setting hostname...
-    ==> master: Setting hostname...
+    ...           
     ==> worker-2: Machine booted and ready!
-    ==> worker-2: Setting hostname...
-    ==> master: Configuring and enabling network interfaces...
-    ==> worker-1: Configuring and enabling network interfaces...
-    ==> worker-2: Configuring and enabling network interfaces...
+    ==> worker-2: Setting hostname... 
+    ==> worker-1: Machine booted and ready!
+    ==> worker-1: Setting hostname... 
+    ==> master: Machine booted and ready!
+    ==> master: Setting hostname... 
+    ==> worker-2: Configuring and enabling network interfaces... 
+    ==> worker-1: Configuring and enabling network interfaces... 
+    ==> master: Configuring and enabling network interfaces... 
+    ==> worker-2: Running provisioner: shell... 
+        worker-2: Running: inline script 
+        worker-2: SSH key provisioning.
+    ==> worker-1: Running provisioner: shell... 
+    ==> master: Running provisioner: shell... 
+        worker-1: Running: inline script 
+        worker-1: SSH key provisioning.
+        master: Running: inline script                  
+        master: SSH key provisioning.
     ```
 
 1. Verify VMs are running
@@ -160,29 +169,22 @@ you might want to change the following:
     rtt min/avg/max/mdev = 0.174/0.302/0.568/0.137 ms
     ```
 
-## Installing Kubernetes
+## Install Kubernetes
 
 1. edit [`hosts`](./hosts) to match the IPs you picked for your cluster,  
     or add or remove worker nodes according to the WORKER_COUNT you picked
 
 1. validate ansible's ssh connection
 
-    on the very first ping you'll be asked to accept the ssh keys of each of the
-    new hosts, quickly answer `yes` to all of them, or run the command multiple
-    times if you don't get it right the first time
-
     ```console
     $ sudo ansible -i hosts all -m ping
-    The authenticity of host '192.168.1.170 (192.168.1.170)' can't be established.
-    ED25519 key fingerprint is SHA256:DYESLuxnzrzQ3gO9wxJ58ijEsL1Jc8YHY7+2V6OAlZw.
-    This key is not known by any other names
-    The authenticity of host '192.168.1.171 (192.168.1.171)' can't be established.
-    ED25519 key fingerprint is SHA256:8tJcnFUghVsJn3LHDvY5ElDj5in5FFIAzPhQziyjYmM.
-    This key is not known by any other names
-    The authenticity of host '192.168.1.172 (192.168.1.172)' can't be established.
-    ED25519 key fingerprint is SHA256:AK0pVdicmdwCJkcMnFdiGZhhXQedGiw4zVfHlHTrgJ4.
-    This key is not known by any other names
-    Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+    worker-1.kube.local | SUCCESS => {
+        "ansible_facts": {
+            "discovered_interpreter_python": "/usr/bin/python3"
+        },
+        "changed": false,
+        "ping": "pong"
+    }
     master.kube.local | SUCCESS => {
         "ansible_facts": {
             "discovered_interpreter_python": "/usr/bin/python3"
@@ -190,15 +192,6 @@ you might want to change the following:
         "changed": false,
         "ping": "pong"
     }
-    yes
-    yesworker-1.kube.local | SUCCESS => {
-        "ansible_facts": {                                                                                                                                                                       y-23
-            "discovered_interpreter_python": "/usr/bin/python3"
-        },
-        "changed": false,
-        "ping": "pong"
-    }
-
     worker-2.kube.local | SUCCESS => {
         "ansible_facts": {
             "discovered_interpreter_python": "/usr/bin/python3"
@@ -207,3 +200,51 @@ you might want to change the following:
         "ping": "pong"
     }
     ```
+
+1. install kubernetes on the cluster
+
+    ```console
+    $ sudo ansible-playbook -i hosts install-kubernetes.yml
+    ...
+    ```
+
+1. fetch kubeconfig from master node
+
+   ```console
+   $ sudo vagrant ssh master -c 'sudo cat /home/kube/.kube/config' > ./config
+   ```
+
+1. backup current kubeconfig
+
+    ```console
+    $ cp ~/.kube/config ~/.kube/config.bak
+    ```
+
+1. install the new kubeconfig
+
+    ```console
+    $ cp ./config ~/.kube/config
+    ```
+
+1. verify cluster is up
+
+    ```console
+    $ kubectl get nodes
+    NAME                  STATUS   ROLES           AGE     VERSION
+    master.kube.local     Ready    control-plane   3m30s   v1.27.2
+    worker-1.kube.local   Ready    <none>          60s     v1.27.2
+    worker-2.kube.local   Ready    <none>          60s     v1.27.2
+    ```
+
+1. verify cluster is healthy
+
+    ```console
+    $ kubectl get componentstatus   # deprecated but good enough
+    Warning: v1 ComponentStatus is deprecated in v1.19+
+    NAME                 STATUS    MESSAGE                         ERROR
+    scheduler            Healthy   ok                              
+    controller-manager   Healthy   ok                              
+    etcd-0               Healthy   {"health":"true","reason":""}  
+    ```
+
+# Battle testing the cluster

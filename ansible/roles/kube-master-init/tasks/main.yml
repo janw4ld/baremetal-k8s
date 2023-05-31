@@ -26,13 +26,15 @@
     owner: kube
     group: kube
 
-- name: install calico network
+- name: install weave cni
   become: true
   become_user: kube
   shell: |
     kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
 
-- name: remove control plane taints # TODO check if taint exists first
+- name: remove control plane taints
   become: true
   become_user: kube
-  shell: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+  shell: |  # attempt to delete the taint, then exit successfully if the only error is that the taint doesn't exist
+    status=$(kubectl taint nodes --all node-role.kubernetes.io/control-plane- \
+    2>&1 >/dev/null) || [ "$status" = "error: taint \"node-role.kubernetes.io/control-plane\" not found" ]
