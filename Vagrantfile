@@ -1,6 +1,6 @@
-# Network prefix to which a single digit is appended so setting
-# NETWORK_PREFIX=192.168.1.17 will create the master at 192.168.1.170 
-# and workers starting from 192.168.1.171 onward
+# The network prefix to which a single digit is appended, i.e. setting
+# NETWORK_PREFIX=192.168.1.17 will create a master node at 192.168.1.170 and
+# workers starting from 192.168.1.171 onward
 NETWORK_PREFIX="192.168.1.17"
 
 ENV['VAGRANT_DEFAULT_PROVIDER'] = 'libvirt'

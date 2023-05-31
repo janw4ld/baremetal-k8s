@@ -108,13 +108,13 @@ document assumes you're in the root of the repo on the host server.
     host-bridge   active   yes         yes
     ```
 
+### Generate an SSH key to use with the cluster
+
+```bash
+sudo ssh-keygen -t ed25519 -f /root/.ssh/k8s_ed25519 -C "baremetal-k8s"
+```
+
 ### Create VMs
-
-1. Create ssh keys to use with the cluster
-
-    ```bash
-    sudo ssh-keygen -t ed25519 -f /root/.ssh/k8s_ed25519 -C "baremetal-k8s"
-    ```
 
 1. Read, validate and edit the [`Vagrantfile`](./Vagrantfile) to your needs
 
@@ -133,7 +133,7 @@ you might want to change the following:
     12GB of RAM. Setting the RAM to 2GB per node works but complex deployments
     on k8s will run out of memory.
 
-1. Create the VMs
+1. Make sure you're in the root of the repo and run the Vagrantfile
 
     ```console
     $ sudo vagrant up
@@ -257,4 +257,4 @@ with `sudo vagrant destroy`.
     etcd-0               Healthy   {"health":"true","reason":""}  
     ```
 
-# Battle testing the cluster
+## Battle testing the cluster
