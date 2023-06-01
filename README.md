@@ -1,6 +1,6 @@
-# Provisioning a cluster of k8s nodes to an on-premise KVM hypervisor and deploying wordpress to it
+# Provisioning a cluster of Kubernetes nodes to an on-premise KVM hypervisor
 
-- [Provisioning a cluster of k8s nodes to an on-premise KVM hypervisor and deploying wordpress to it](#provisioning-a-cluster-of-k8s-nodes-to-an-on-premise-kvm-hypervisor-and-deploying-wordpress-to-it)
+- [Provisioning a cluster of Kubernetes nodes to an on-premise KVM hypervisor](#provisioning-a-cluster-of-kubernetes-nodes-to-an-on-premise-kvm-hypervisor)
     - [Prerequisites](#prerequisites)
     - [Creating the cluster](#creating-the-cluster)
         - [Setup a network bridge for KVM](#setup-a-network-bridge-for-kvm)
@@ -111,7 +111,7 @@ document assumes you're in the root of the repo on the host server.
 
 ```console
 $ echo "allow br0" | sudo tee /etc/qemu/$USER.conf
-allow all
+allow br0
 $ echo "include /etc/qemu/$USER.conf" | sudo tee -a /etc/qemu/bridge.conf
 include /etc/qemu/janw4ld.conf
 $ sudo chown root:$USER /etc/qemu/$USER.conf
