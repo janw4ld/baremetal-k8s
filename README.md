@@ -2,6 +2,7 @@
 
 - [Provisioning a cluster of k8s nodes to an on-premise KVM hypervisor and deploying wordpress to it](#provisioning-a-cluster-of-k8s-nodes-to-an-on-premise-kvm-hypervisor-and-deploying-wordpress-to-it)
     - [Prerequisites](#prerequisites)
+        - [Disclaimer](#disclaimer)
     - [Creating the cluster](#creating-the-cluster)
         - [Setup a network bridge for KVM](#setup-a-network-bridge-for-kvm)
         - [Generate an SSH key to use with the cluster](#generate-an-ssh-key-to-use-with-the-cluster)
@@ -29,6 +30,8 @@ A linux host with :
 - [nmcli](https://manpages.ubuntu.com/manpages/lunar/man1/nmcli.1.html)
 - [Hashicorp Vagrant](https://www.vagrantup.com/)
 - [Ansible](https://www.ansible.com/)
+
+### Disclaimer
 
 This setup was created and tested on Fedora 37, but should work on any linux
 distro. The libvirt bridge network requires root privileges to create and use,
