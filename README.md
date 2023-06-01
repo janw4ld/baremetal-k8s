@@ -8,8 +8,7 @@
         - [Create VMs](#create-vms)
     - [Installing Kubernetes](#installing-kubernetes)
     - [Configuring MetalLB Load Balancer](#configuring-metallb-load-balancer)
-    - [Battle testing the cluster](#battle-testing-the-cluster)
-        - [Deploying wordpress+mysql app](#deploying-wordpressmysql-app)
+    - [Deploying wordpress+mysql app](#deploying-wordpressmysql-app)
 - [References](#references)
 
 ## Prerequisites
@@ -48,7 +47,7 @@ document assumes you're in the root of the repo on the host server.
 
 ### Setup a network bridge for KVM
 
-1. Show active interfaces, take note of the one you want to bridge
+1. Show active interfaces and take note of the one you want to bridge
 
     ```console
     $ nmcli con show --active
@@ -57,14 +56,14 @@ document assumes you're in the root of the repo on the host server.
     CENSORED            45b17347-1a0c-4b0e-8d0f-4b0e8d0f4b0e  wifi      wlo1
     ```
 
-1. Create bridge interface
+1. Create a bridge interface
 
     ```console
     $ nmcli con add ifname br0 type bridge con-name br0
     Connection 'br0' (f5075153-2aef-4a61-9be7-887021b54c8e) successfully added.
     ```
 
-1. Link Bridge Interface to Real Interface (enp2s0 on this recipe)
+1. Link the bridge interface to real interface (enp2s0 in this example)
 
     ```console
     $ nmcli con add type bridge-slave ifname enp2s0 master br0
@@ -82,7 +81,7 @@ document assumes you're in the root of the repo on the host server.
     rkManager/ActiveConnection/11)
     ```
 
-1. Create a new libvirt network for the bridge:
+1. Create a new libvirt network for the bridge
 
     ```console
     $ cat <<EOF >bridge.xml
@@ -97,7 +96,7 @@ document assumes you're in the root of the repo on the host server.
     Network host-bridge defined from bridge.xml
     ```
 
-1. Start the network:
+1. Start the network
 
     ```console
     $ sudo virsh net-start host-bridge
@@ -107,7 +106,7 @@ document assumes you're in the root of the repo on the host server.
     Network host-bridge marked as autostarted
     ```
 
-1. Verify libvirt networks:
+1. Verify libvirt networks
 
     ```console
     $ sudo virsh net-list --all
@@ -205,7 +204,7 @@ with `sudo vagrant destroy`.
 
 ## Installing Kubernetes
 
-1. validate ansible's ssh connection
+1. Validate Ansible's SSH connection
 
     ```console
     $ sudo ansible -i hosts all -m ping
@@ -232,14 +231,14 @@ with `sudo vagrant destroy`.
     }
     ```
 
-1. install kubernetes on the cluster
+1. Install Kubernetes on the cluster
 
     ```console
     $ sudo ansible-playbook -i hosts install-kubernetes.yml
     ...
     ```
 
-1. connect local kubectl to the cluster
+1. Connect your local kubectl to the cluster
 
     NOTE: this will move your local `~/.kube/config` to `~/.kube/config.bak`
 
@@ -249,7 +248,7 @@ with `sudo vagrant destroy`.
    $ cp ./config ~/.kube/config
    ```
 
-1. verify cluster is up
+1. Verify the cluster is up
 
     ```console
     $ kubectl get nodes
@@ -259,7 +258,7 @@ with `sudo vagrant destroy`.
     worker-2.kube.local   Ready    <none>          60s     v1.27.2
     ```
 
-1. verify cluster is healthy
+1. Verify the cluster is healthy
 
     ```console
     $ kubectl get componentstatus   # deprecated but good enough
@@ -272,20 +271,26 @@ with `sudo vagrant destroy`.
 
 ## Configuring MetalLB Load Balancer
 
-1. identify another block of unused IP addresses on the host network to allocate
+1. Identify another block of unused IP addresses on the host network to allocate
 to the load balancer, and edit
-[`k8s/metallb/metallb.yml:.spec.addresses`](./k8s/metallb/metallb.yml) to use
+[`k8s/metallb/metallb.yml`](./k8s/metallb/metallb.yml).spec.addresses to use
 it.
 
     NOTE: this IP pool definition uses Layer 2 mode instead of BGP, which isn't
     the most performant production configuration, but it's the one suitable for
     homelab environments where the router isn't under your control.
 
-## Battle testing the cluster
+1. Apply the MetalLB configuration
 
-### Deploying wordpress+mysql app
+    ```console
+    $ kubectl apply -f k8s/metallb
+    ipaddresspool.metallb.io/first-pool created
+    l2advertisement.metallb.io/main created
+    ```
 
-1. create mysql secrets
+## Deploying wordpress+mysql app
+
+1. Create mysql secrets
 
    ```console
    $ cat<<EOF >k8s/wordpress/db-secret.yml
@@ -300,7 +305,7 @@ it.
     EOF
     ```
 
-1. deploy application
+1. Deploy application
 
    ```console
    $ kubectl apply -f k8s/wordpress && sleep 5 && kubectl get po 
@@ -318,7 +323,7 @@ it.
    wp-server-7c89f74666-wzskz   1/1     Running   0          5s
    ```
 
-1. get service ip address
+1. Get frontend service IP address
 
    ```console
    $ kubectl get svc wp-server 
@@ -329,7 +334,7 @@ it.
     note that port `192.168.1.240:80` can be forwarded in the router to expose
     the service to the internet.
 
-1. visit the service at `http://<external-ip>:80` on your browser
+1. Visit the service at `http://<external-ip>:80` on your browser
     ![wordpress server running](README.d/wp-server.png)
 
 # References
