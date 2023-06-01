@@ -4,7 +4,6 @@
     - [Prerequisites](#prerequisites)
     - [Creating the cluster](#creating-the-cluster)
         - [Setup a network bridge for KVM](#setup-a-network-bridge-for-kvm)
-        - [Allow your user account to use the bridge](#allow-your-user-account-to-use-the-bridge)
         - [Generate an SSH key to use with the cluster](#generate-an-ssh-key-to-use-with-the-cluster)
         - [Create VMs](#create-vms)
     - [Installing Kubernetes](#installing-kubernetes)
@@ -107,16 +106,16 @@ document assumes you're in the root of the repo on the host server.
     host-bridge   active   yes         yes
     ```
 
-### Allow your user account to use the bridge
+1. Allow your uprivileged user to use the bridge
 
-```console
-$ echo "allow br0" | sudo tee /etc/qemu/$USER.conf
-allow br0
-$ echo "include /etc/qemu/$USER.conf" | sudo tee -a /etc/qemu/bridge.conf
-include /etc/qemu/janw4ld.conf
-$ sudo chown root:$USER /etc/qemu/$USER.conf
-$ sudo chmod 640 /etc/qemu/$USER.conf
-```
+    ```console
+    $ echo "allow br0" | sudo tee /etc/qemu/$USER.conf
+    allow br0
+    $ echo "include /etc/qemu/$USER.conf" | sudo tee -a /etc/qemu/bridge.conf
+    include /etc/qemu/janw4ld.conf
+    $ sudo chown root:$USER /etc/qemu/$USER.conf
+    $ sudo chmod 640 /etc/qemu/$USER.conf
+    ```
 
 ### Generate an SSH key to use with the cluster
 
@@ -178,8 +177,8 @@ use it.
     $ sudo virsh list --all
      Id   Name                     State
     -----------------------------------------
-     1    baremetal-k8s_master     running
-     2    baremetal-k8s_worker-1   running
+     1    baremetal-k8s_worker-1   running
+     2    baremetal-k8s_master     running
      3    baremetal-k8s_worker-2   running
      ...
     ```
@@ -209,7 +208,7 @@ with `sudo vagrant destroy`.
 1. Validate Ansible's SSH connection
 
     ```console
-    $ sudo ansible -i hosts all -m ping
+    $ ansible -i hosts all -m ping
     worker-1.kube.local | SUCCESS => {
         "ansible_facts": {
             "discovered_interpreter_python": "/usr/bin/python3"
@@ -236,7 +235,7 @@ with `sudo vagrant destroy`.
 1. Install Kubernetes on the cluster
 
     ```console
-    $ sudo ansible-playbook -i hosts install-kubernetes.yml
+    $ ansible-playbook -i hosts install-kubernetes.yml
     ...
     ```
 
@@ -245,7 +244,7 @@ with `sudo vagrant destroy`.
     NOTE: this will move your local `~/.kube/config` to `~/.kube/config.bak`
 
    ```console
-   $ sudo vagrant ssh master -c 'sudo cat /home/kube/.kube/config' > ./config
+   $ vagrant ssh master -c 'sudo cat /home/kube/.kube/config' > ./config
    $ cp ~/.kube/config ~/.kube/config.bak
    $ cp ./config ~/.kube/config
    ```
@@ -255,9 +254,9 @@ with `sudo vagrant destroy`.
     ```console
     $ kubectl get nodes
     NAME                  STATUS   ROLES           AGE     VERSION
-    master.kube.local     Ready    control-plane   3m30s   v1.27.2
-    worker-1.kube.local   Ready    <none>          60s     v1.27.2
-    worker-2.kube.local   Ready    <none>          60s     v1.27.2
+    master.kube.local     Ready    control-plane   3m21s   v1.27.2
+    worker-1.kube.local   Ready    <none>          53s     v1.27.2
+    worker-2.kube.local   Ready    <none>          53s     v1.27.2
     ```
 
 1. Verify the cluster is healthy
@@ -266,9 +265,9 @@ with `sudo vagrant destroy`.
     $ kubectl get componentstatus   # deprecated but good enough
     Warning: v1 ComponentStatus is deprecated in v1.19+
     NAME                 STATUS    MESSAGE                         ERROR
-    scheduler            Healthy   ok                              
     controller-manager   Healthy   ok                              
-    etcd-0               Healthy   {"health":"true","reason":""}  
+    etcd-0               Healthy   {"health":"true","reason":""}   
+    scheduler            Healthy   ok                      
     ```
 
 ## Configuring MetalLB Load Balancer
@@ -310,8 +309,8 @@ it.
 1. Deploy application
 
    ```console
-   $ kubectl apply -f k8s/wordpress && sleep 5 && kubectl get po 
-   secret/db-secret unchanged
+   $ kubectl apply -f k8s/wordpress && sleep 5 && kubectl get po
+   secret/db-secret created
    persistentvolume/mysql-pv created
    persistentvolumeclaim/mysql-pv-claim created
    deployment.apps/wp-mysql created
@@ -321,16 +320,16 @@ it.
    deployment.apps/wp-server created
    service/wp-server created
    NAME                         READY   STATUS    RESTARTS   AGE
-   wp-mysql-744c886989-jcwvf    1/1     Running   0          5s
-   wp-server-7c89f74666-wzskz   1/1     Running   0          5s
+   wp-mysql-744c886989-pdsvx    1/1     Running   0          5s
+   wp-server-7c89f74666-m6p8h   1/1     Running   0          5s
    ```
 
 1. Get frontend service IP address
 
    ```console
    $ kubectl get svc wp-server 
-   NAME        TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
-   wp-server   LoadBalancer   10.103.95.149   192.168.1.240   80:31379/TCP   20s
+    NAME        TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
+    wp-server   LoadBalancer   10.106.213.74   192.168.1.240   80:31025/TCP   66s
    ```
 
     note that port `192.168.1.240:80` can be forwarded in the router to expose

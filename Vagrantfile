@@ -11,10 +11,7 @@ WORKER_COUNT = 2    # total nodes = 1 master + WORKER_COUNT
 SSH_KEY_PATH = "#{ENV['HOME']}/.ssh/k8s_ed25519"
 
 Vagrant.configure("2") do |config|
-    config.ssh.insert_key = false
-
-    ssh_prv_key = File.read(SSH_KEY_PATH)
-    ssh_pub_key = File.readlines("#{SSH_KEY_PATH}.pub").first.strip
+    config.ssh.insert_key = false   # don't insert vagrant default/insecure key
 
     config.vm.provider :libvirt do |libvirt|
         libvirt.cpus = 2
@@ -62,6 +59,7 @@ Vagrant.configure("2") do |config|
     TEXT
     )
 
+    ssh_pub_key = File.readlines("#{SSH_KEY_PATH}.pub").first.strip
     config.vm.provision "shell" do |s|       
         # https://stackoverflow.com/questions/30075461/how-do-i-add-my-own-public-key-to-vagrant-vm
         s.inline = <<-SHELL
@@ -78,7 +76,7 @@ Vagrant.configure("2") do |config|
     (0..WORKER_COUNT).each do |i|   # add vms to known_hosts to avoid prompt
         system(
         <<~SHELL
-            ssh-keygen -R #{NETWORK_PREFIX}#{i} 2>/dev/null
+            ssh-keygen -R #{NETWORK_PREFIX}#{i} &>/dev/null
             ssh-keyscan -H #{NETWORK_PREFIX}#{i} 2>/dev/null \
             | tee -a #{ENV['HOME']}/.ssh/known_hosts >/dev/null
         SHELL
