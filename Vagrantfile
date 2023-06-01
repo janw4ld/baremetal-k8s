@@ -8,9 +8,7 @@ IMAGE_NAME = "roboxes/ubuntu2204"   # 1.5GB, not based on cloud image
 
 WORKER_COUNT = 2    # total nodes = 1 master + WORKER_COUNT
 
-HOST_HOME_PATH = ENV['HOME']
-SSH_KEY_PATH = "#{HOST_HOME_PATH}/.ssh/k8s_ed25519"
-
+SSH_KEY_PATH = "#{ENV['HOME']}/.ssh/k8s_ed25519"
 
 Vagrant.configure("2") do |config|
     config.ssh.insert_key = false
@@ -79,8 +77,11 @@ Vagrant.configure("2") do |config|
 
     (0..WORKER_COUNT).each do |i|   # add vms to known_hosts to avoid prompt
         system(
-            "ssh-keyscan -H #{NETWORK_PREFIX}#{i} 2>/dev/null \
-            | tee -a #{HOST_HOME_PATH}/.ssh/known_hosts >/dev/null"
+        <<~SHELL
+            ssh-keygen -R #{NETWORK_PREFIX}#{i} 2>/dev/null
+            ssh-keyscan -H #{NETWORK_PREFIX}#{i} 2>/dev/null \
+            | tee -a #{ENV['HOME']}/.ssh/known_hosts >/dev/null
+        SHELL
         )
     end
 end
