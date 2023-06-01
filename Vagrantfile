@@ -8,7 +8,7 @@ IMAGE_NAME = "roboxes/ubuntu2204"   # 1.5GB, not based on cloud image
 
 WORKER_COUNT = 2    # total nodes = 1 master + WORKER_COUNT
 
-HOST_HOME_PATH = "/root"
+HOST_HOME_PATH = "/home/meka"
 SSH_KEY_PATH = "#{HOST_HOME_PATH}/.ssh/k8s_ed25519"
 
 

@@ -2,9 +2,9 @@
 
 - [Provisioning a cluster of k8s nodes to an on-premise KVM hypervisor and deploying wordpress to it](#provisioning-a-cluster-of-k8s-nodes-to-an-on-premise-kvm-hypervisor-and-deploying-wordpress-to-it)
     - [Prerequisites](#prerequisites)
-        - [Disclaimer](#disclaimer)
     - [Creating the cluster](#creating-the-cluster)
         - [Setup a network bridge for KVM](#setup-a-network-bridge-for-kvm)
+        - [Allow your user account to use the bridge](#allow-your-user-account-to-use-the-bridge)
         - [Generate an SSH key to use with the cluster](#generate-an-ssh-key-to-use-with-the-cluster)
         - [Create VMs](#create-vms)
     - [Installing Kubernetes](#installing-kubernetes)
@@ -30,18 +30,6 @@ A linux host with :
 - [nmcli](https://manpages.ubuntu.com/manpages/lunar/man1/nmcli.1.html)
 - [Hashicorp Vagrant](https://www.vagrantup.com/)
 - [Ansible](https://www.ansible.com/)
-
-### Disclaimer
-
-This setup was created and tested on Fedora 37, but should work on any linux
-distro. The libvirt bridge network requires root privileges to create and use,
-which forces us to use vagrant as root, which in turn forces running ansible as
-root. This is not ideal, but it's the only way compatible with Fedora's libvirt
-defaults, other distros may allow non-privileged users to use all libvirt
-features in a local (per-user) scope so your mileage may vary, but modifying the
-repo to work with another user is easy, the only thing to change is
-`HOST_HOME_PATH = "/root"` in the Vagrantfile and `/root` to `$HOME` in the
-README.md instructions.
 
 ## Creating the cluster
 
@@ -119,10 +107,21 @@ document assumes you're in the root of the repo on the host server.
     host-bridge   active   yes         yes
     ```
 
+### Allow your user account to use the bridge
+
+```console
+$ echo "allow br0" | sudo tee /etc/qemu/$USER.conf
+allow all
+$ echo "include /etc/qemu/$USER.conf" | sudo tee -a /etc/qemu/bridge.conf
+include /etc/qemu/janw4ld.conf
+$ sudo chown root:$USER /etc/qemu/$USER.conf
+$ sudo chmod 640 /etc/qemu/$USER.conf
+```
+
 ### Generate an SSH key to use with the cluster
 
 ```bash
-sudo ssh-keygen -t ed25519 -f /root/.ssh/k8s_ed25519 -C "baremetal-k8s"
+ssh-keygen -t ed25519 -f ~/.ssh/k8s_ed25519 -C "baremetal-k8s"
 ```
 
 ### Create VMs
@@ -151,7 +150,7 @@ use it.
 1. Make sure you're in the root of the repo and run the Vagrantfile
 
     ```console
-    $ sudo vagrant up
+    $ vagrant up
     ...           
     ==> worker-2: Machine booted and ready!
     ==> worker-2: Setting hostname... 
