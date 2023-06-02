@@ -200,8 +200,8 @@ use it.
     ```
 
 The VMs are now ready to be provisioned with kubernetes. They can be brought up
-and down at any time with `sudo vagrant up` and `sudo vagrant halt`, and deleted
-with `sudo vagrant destroy`.
+and down at any time with `vagrant up` and `vagrant halt`, and deleted
+with `vagrant destroy`.
 
 ## Installing Kubernetes
 
